@@ -5,4 +5,4 @@ lineaSSP is a Python module to use or retrieve information from the LIneA Solar 
 ## Installation
 
 ```bash
-pip install lineaSSP
+pip install -e .
