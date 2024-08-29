@@ -1,10 +1,13 @@
 import requests
 from tqdm import tqdm
-from typing import Union, Optional, List
+from typing import Union, Optional, List, Dict
 from collections import OrderedDict
-from .config import API_URL, PAGE_SIZE
+import re
+from datetime import datetime
+import json
 
-
+BASE_URL = 'https://solarsystem.linea.org.br'
+# BASE_URL = 'http://localhost'
 
 class BaseAPI:
     """
@@ -26,38 +29,45 @@ class BaseAPI:
 
     """
 
-    def __init__(self, base_url: Optional[str] = API_URL, endpoint: str = ""):
+    def __init__(self, base_url: str = BASE_URL, endpoint: str = "", page_size: int = 1000):
         self.base_url = base_url
         self.endpoint = endpoint
+        self.page_size = page_size
     
-    def _format_name_values(self, name: str) -> str:  
-        """
-        Formats the name values.
 
-        Args:
-            name (str): The name to be formatted.
+    def _parse_values(self, params: dict) -> dict:
+        if "name" in params.keys():
+            params["name"] = params["name"].strip().capitalize()
+        
+        if "principal_designation" in params.keys():
+            params["principal_designation"] = params["principal_designation"].strip().upper()
 
-        Returns:
-            str: The formatted name.
+        if "date_time_after" in params.keys():
+            try:
+                self._validate_datetime(params["date_time_after"])
+            except ValueError:
+                raise InvalidDatetimeFormat
+        
+        if "date_time_before" in params.keys():
+            try:
+                self._validate_datetime(params["date_time_before"])
+            except ValueError:
+                raise InvalidDatetimeFormat
+        
+        return params
 
-        """
-        formated_name = name if name == '' else name.lower().replace(name[0].lower(), name[0].upper(), 1)
-        formated_name = formated_name.upper() if formated_name[0].isdigit() else formated_name
-        return formated_name
+    def _validate_datetime(self, date_string):
+        iso_8601_regex = re.compile(
+            r'^\d{4}-\d{2}-\d{2}$|'  # Date only (YYYY-MM-DD)
+            # r'^\d{4}-\d{2}-\d{2}[T\s]\d{2}$|'  # Date and hour (YYYY-MM-DDTHH or YYYY-MM-DD HH)
+            r'^\d{4}-\d{2}-\d{2}[T\s]\d{2}:\d{2}$|'  # Date, hour, and minute (YYYY-MM-DDTHH:MM or YYYY-MM-DD HH:MM)
+            r'^\d{4}-\d{2}-\d{2}[T\s]\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})?$'  # Full date and time (YYYY-MM-DDTHH:MM:SS[.fff][Z|±HH:MM] or YYYY-MM-DD HH:MM:SS[.fff][Z|±HH:MM])
+        )
+        if bool(iso_8601_regex.match(date_string)):
+            return True
+        else:
+            raise InvalidDatetimeFormat()
 
-    def _format_name(self, list_of_names: List[Union[str,int]]) -> str:
-        """
-        Formats a list of names.
-
-        Args:
-            list_of_names (List[Union[str,int]]): The list of names to be formatted.
-
-        Returns:
-            str: The formatted names separated by commas.
-
-        """
-        return ','.join([self._format_name_values(str(name)) for name in list_of_names])
-    
     def _replace_key(self, data: dict, old_key: str, new_key: str):
         """
         Replaces a key in a dictionary.
@@ -101,13 +111,24 @@ class BaseAPI:
             response = requests.get(url, params=params)
             result = response.json()
             return result
-
+        
         if response.status_code != 200:
             return {'count': 0, 
                     'results': [{'error': 'An error occurred fetching the data', 'status_code': response.status_code}]}
     
+    def _drop_columns(self, data: List[dict]) -> List[str]:
+        columns_to_remove = ["map_url","proper_motion","ct","multiplicity_flag",
+                   "g_mag_vel_corrected","rp_mag_vel_corrected",
+                   "h_mag_vel_corrected","instant_uncertainty",
+                   "ra_star_with_pm","dec_star_with_pm","ra_star_to_date",
+                   "dec_star_to_date","ra_target_apparent","dec_target_apparent",
+                   "e_ra_target","e_dec_target","ephemeris_version",
+                   "rms","last_obs_included","obs_source","orb_ele_source",
+                   "nima","job_id"]
+        filtered_data = [{k: v for k, v in item.items() if k not in columns_to_remove} for item in data]
+        return filtered_data
     
-    def get_data(self, params: Optional[Union[dict, None]]=None, id: Optional[int]=None, limit: Optional[Union[int, None]]=PAGE_SIZE, show_bar: Optional[bool]=True) -> dict:
+    def get_data(self, params: Optional[Union[dict, None]]=None, id: Optional[int]=None, limit: Optional[Union[int, str, None]]=None, show_bar: Optional[bool]=True) -> dict:
         """
         Retrieves data from the API.
 
@@ -122,23 +143,25 @@ class BaseAPI:
 
         """
         params = params if params is not None else {}
-        
-        if ('name' in params.keys()) and (isinstance(params['name'], list)):        
-            params['name'] = self._format_name(params['name'])
+
+        limit = self.page_size if limit is None else limit
+        params['pageSize'] = self.page_size
+
+        # parse ill formated values
+        params = self._parse_values(params)
         
         fetch_results = self._fetch_data(params, id=id)
+        limit = fetch_results['count'] if limit == 'all' else limit # forçar pegar todos os resultados.
+        # isto é calculado para criar o iterador tqdm. usar while 'next' is not None tornaria a barra de progresso muito complicada
+        n_pages = (limit // self.page_size) + 1 if (limit % self.page_size) > 0 else (limit // self.page_size)
 
-        limit = limit if limit is not None else fetch_results['count']
-        n_pages = (limit // PAGE_SIZE) + 1 if (limit % PAGE_SIZE) > 0 else (limit // PAGE_SIZE)
-        
         output = fetch_results['results']
         if fetch_results['count'] == 0:
             return output
 
-        params['pageSize'] = limit if (limit is not None) and (limit < PAGE_SIZE) else PAGE_SIZE
         iterable = range(1, n_pages)
         if show_bar and n_pages > 1:
-            iterable = tqdm(iterable, desc='Retrieving predictions')
+            iterable = tqdm(iterable, desc='Retrieving predictions', bar_format='{l_bar}{bar}|')
 
         for i in iterable:
             params['page'] = i
@@ -148,5 +171,57 @@ class BaseAPI:
         
         #TODO: The api should return the correct key, update this when the api is fixed
         output = [self._replace_key(item, 'principal_designation', 'provisional_designation') for item in output[0:limit]]
-
+        # output = self._drop_columns(output)
         return output
+    
+    def by_provisional_designation(self, provisional_designation: str, limit: Optional[Union[int, str, None]]='all', show_bar: Optional[bool]=True) -> List[dict]:
+        """Fetches the prediction by provisional designation.
+
+        Args:
+            provisional_designation (str): The provisional designation of the asteroid.
+
+        Returns:
+            A list of dictionaries representing the prediction.
+        """
+        params = {'name': provisional_designation}
+        return self.get_data(params, limit=limit, show_bar=show_bar)
+    
+    def by_name(self, name: str, limit: Optional[Union[int, str, None]]='all', show_bar: Optional[bool]=True) -> List[dict]:
+        """Fetches the prediction by name.
+
+        Args:
+            name (str): The name of the asteroid.
+
+        Returns:
+            A list of dictionaries representing the prediction.
+        """
+        params = {'name': name}
+        return self.get_data(params, limit=limit, show_bar=show_bar)
+    
+    def by_number(self, number: int, limit: Optional[Union[int, str, None]]='all', show_bar: Optional[bool]=True) -> List[dict]:
+        """Fetches the prediction by number.
+
+        Args:
+            number (int): The number of the asteroid.
+
+        Returns:
+            A list of dictionaries representing the prediction.
+        """
+        params = {'number': number}
+        return self.get_data(params, limit=limit, show_bar=show_bar)
+    
+ 
+class InvalidDatetimeFormat(Exception):
+    def __init__(self, message="The provided string does not match the accepted date/datetime format."):
+        self.message = message
+        self.examples = [
+            "Date only:                 YYYY-MM-DD",                    # Date only
+            "Date, hour, and minute:    YYYY-MM-DDTHH:MM",              # Date, hour, and minute
+            "Date and time (UTC):       YYYY-MM-DDTHH:MM:SSZ",          # Date and time (UTC)
+            "Date and time with offset: YYYY-MM-DDTHH:MM:SS±HH:MM"      # Date and time with offset
+        ]
+        super().__init__(self.message)
+
+    def __str__(self):
+        example_str = "\n".join(self.examples)
+        return f"{self.message}\nAccepted formats:\n{example_str}"
