@@ -1,6 +1,6 @@
 from typing import Optional, List, Union
-from .base import BaseAPI
-from .config import API_URL
+from .base import BaseAPI, BASE_URL
+from .prediction import Prediction
 import requests
 
 class Asteroid(BaseAPI):
@@ -16,30 +16,9 @@ class Asteroid(BaseAPI):
 
     """
 
-    def __init__(self, base_url: Optional[str] = API_URL):
-        self.base_url = base_url
-        endpoint = '/api/asteroids/'
-        super().__init__(base_url, endpoint)
-    
-    def _format_name(self, list_of_names: List[Union[str,int]]) -> str:
-            """
-            Format the name of the asteroid.
-
-            Args:
-                list_of_names (List[Union[str,int]]): A list of names.
-
-            Returns:
-                str: The formatted name of the asteroid.
-
-            """
-            if len(list_of_names) > 1:
-                print(f'Warning: This endpoint only accepts one name at a time. Using the first name: {list_of_names[0]}')
-            name = list_of_names[0]
-            # if it a string, firt letter is uppercase
-            formated_name = name if name == '' else name.lower().replace(name[0].lower(), name[0].upper(), 1)
-            # if starts with a number, all letters are uppercase
-            formated_name = formated_name.upper() if formated_name[0].isdigit() else formated_name
-            return formated_name
+    def __init__(self, base_url: str=BASE_URL, endpoint: str=""):
+        super().__init__(base_url=base_url, endpoint=endpoint)
+        self.endpoint = "/api/asteroids"       
     
     def _fetch_endpoint(self, endpoint: str, name: Optional[str]=None) -> str:
         """
@@ -67,41 +46,44 @@ class Asteroid(BaseAPI):
         else:
             return {'error': 'An error occurred fetching the data', 'status_code': response.status_code}
     
-    def dynamical_classes(self) -> List[dict]:
-            """
-            Fetches the dynamical classes from the 'base_dynclasses' endpoint.
+    def dynamical_classes(self) -> Union[str,List[dict]]:
+        """
+        Fetches the dynamical classes from the 'base_dynclasses' endpoint.
 
-            Returns:
-                A list of dictionaries representing the dynamical classes.
-            """
-            return self._fetch_endpoint('base_dynclasses')
+        Returns:
+            A list of dictionaries representing the dynamical classes.
+        """
+        dynamical_classes = self._fetch_endpoint('base_dynclasses')
+        dynamical_classes = dynamical_classes['results'].sort() if 'results' in dynamical_classes.keys() else 'Unavailable'
+        return dynamical_classes
     
-    def count(self) -> List[dict]:
-            """
-            Retrieves the count of asteroids from the API.
+    def count(self) -> Union[str,int]:
+        """
+        Retrieves the count of asteroids from the API.
 
-            Returns:
-                A list of dictionaries containing the count of asteroids.
-            """
-            return self._fetch_endpoint('count')
+        Returns:
+            A list of dictionaries containing the count of asteroids.
+        """
+        count = self._fetch_endpoint('count')
+        count = count['count'] if 'count' in count.keys() else 'Unavailable'
+        return count
     
     def dynamical_subclasses(self) -> List[dict]:
-            """
-            Fetches the dynamical subclasses of the asteroid.
+        """
+        Fetches the dynamical subclasses of the asteroid.
 
-            Returns:
-                A list of dictionaries representing the dynamical subclasses.
-            """
-            return self._fetch_endpoint('dynclasses')
+        Returns:
+            A list of dictionaries representing the dynamical subclasses.
+        """
+        dynamical_subclasses = self._fetch_endpoint('dynclasses')
+        dynamical_subclasses = dynamical_subclasses['results'].sort() if 'results' in dynamical_subclasses.keys() else 'Unavailable'
+        return dynamical_subclasses
     
-    def with_prediction(self, name: Optional[str]=None) -> List[dict]:
-            """
-            Retrieves a list of dictionaries containing predictions for the specified asteroid.
+    def get_predictions_by_provisional_designation(self, provisional_designation: str, limit: Optional[Union[int, str, None]]='all', show_bar: Optional[bool]=True) -> List[dict]:
+        return Prediction().by_provisional_designation(provisional_designation, limit=limit, show_bar=show_bar)
 
-            Args:
-                name (str, optional): The name of the asteroid. If not provided, will return an error.
+    def get_predictions_by_name(self, name: str, limit: Optional[Union[int, str, None]]='all', show_bar: Optional[bool]=True) -> List[dict]:
+        return Prediction().by_name(name, limit=limit, show_bar=show_bar)
 
-            Returns:
-                List[dict]: A list of dictionaries containing predictions for the specified asteroid(s).
-            """
-            return self._fetch_endpoint('with_prediction', name=name)
+    def get_predictions_by_number(self, number: int, limit: Optional[Union[int, str, None]]='all', show_bar: Optional[bool]=True) -> List[dict]:
+        return Prediction().by_number(number, limit=limit, show_bar=show_bar)    
