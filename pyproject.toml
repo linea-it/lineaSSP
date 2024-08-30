@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools>=42", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "lineaSSP"
+version = "0.1.0"
+description = "A Python module to use or retrieve information from the LIneA Solar System Portal."
+readme = "README.md"
+requires-python = ">=3.8"
+dependencies = [
+    "numpy",
+    "scipy",
+    "sora-astro",
+    "astropy",
+    "cartopy",
+    "tqdm",
+]
+authors = [
+    {name="LIneA Team", email="helpdesk@linea.org.br"},
+]
+license = {text = "MIT"}
+urls = { "Homepage" = "https://github.com/linea-it/lineaSSP" }
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=4.4.1",
+    "twine>=4.0,<5.0",
+]

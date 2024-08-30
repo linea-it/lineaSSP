@@ -24,8 +24,6 @@ from astropy.coordinates import (
 from astropy.time import Time
 from scipy.interpolate import CubicSpline
 
-import matplotlib.pyplot as plt
-
 def _calculate_r2(x, y):
     """
     Calculate r2 based on the given x and y values.
