@@ -516,7 +516,7 @@ def _path_arc(location, path_location):
 
 
 def _calculate_path_visibility(
-    location, path, radius, latitudinal=False, additional_path=None, ext_radius=0
+    location, path, radius, latitudinal=False
 ):
     """
     Calculate if the central path is within range.
@@ -555,23 +555,8 @@ def _calculate_path_visibility(
         )
         return len(path_distances) > 0 and any(path_distances > radius)
     else:
-        if additional_path is not None:
-            add_path_location = EarthLocation.from_geodetic(
-                lat=additional_path[1] * u.deg,
-                lon=additional_path[0] * u.deg,
-                height=0 * u.m,
-            )
-            add_path_arc = _path_arc(location, add_path_location)
-            add_arc = add_path_arc.min()
-            if len(add_path_arc) > 0 and (add_arc <= radius):
-                return True
-            else:
-                path_arc = _path_arc(location, path_location)
-                tot_arc = add_arc + path_arc.min()
-                return len(path_arc) > 0 and (tot_arc <= (ext_radius * u.km + radius))
-        else:
-            path_arc = _path_arc(location, path_location)
-            return len(path_arc) > 0 and (path_arc.min() <= radius)
+        path_arc = _path_arc(location, path_location)
+        return len(path_arc) > 0 and (path_arc.min() <= radius)
 
 
 def _polynomial_fit(x, y, degree):
@@ -721,8 +706,7 @@ def _build_path_from_coeff(lon_coeff, lat_coeff, t0, t1, n_elements, min_lat, ma
             format="datetime",
             scale="utc",
         )
-        delta_t = (t1 - t0).value * 86400
-        times = np.linspace(-delta_t/2., delta_t/2., n_elements)
+        times = np.linspace(0, (t1 - t0).value * 86400, n_elements)
         latitude = np.polyval(lat_coeff, times)
         longitude = np.polyval(lon_coeff, times)
 
@@ -1149,6 +1133,9 @@ def visibility_from_coeff(
     bool
         True if the occultation event is visible, False otherwise.
     """
+    if not inputdict:
+        return False
+    
     if isinstance(date_time, str):
         date_time = datetime.fromisoformat(date_time)
     date_time = date_time.isoformat().replace("+00:00", "Z")
@@ -1171,6 +1158,9 @@ def visibility_from_coeff(
     radius = radius * u.km
 
     nighttime = _check_nighttime(location_c, Time(date_time))
+    body_upper_visibility = False
+    body_lower_visibility = False
+    path_visibility = False
 
     # if upperlimit coeff is provided check the path
     if inputdict['body_upper_coeff_longitude'] and inputdict['body_upper_coeff_latitude']:
@@ -1186,9 +1176,10 @@ def visibility_from_coeff(
             inputdict["min_longitude"],
             inputdict["max_longitude"],
         ))
-    body_upper_visibility = _calculate_path_visibility(
-                location, object_upper_limit, radius, latitudinal=latitudinal
-            )
+        body_upper_visibility = _calculate_path_visibility(
+                    location, object_upper_limit, radius, latitudinal=latitudinal
+                )
+
 
     # if lower lim is provided check
     if inputdict['body_lower_coeff_longitude'] and inputdict['body_lower_coeff_latitude']:
@@ -1203,14 +1194,12 @@ def visibility_from_coeff(
             inputdict["max_latitude"],
             inputdict["min_longitude"],
             inputdict["max_longitude"],
-        )
-        if "body_lower_coeff_longitude" in inputdict
-        else None
-    )
-    body_lower_visibility = _calculate_path_visibility(
-                location, object_lower_limit, radius, latitudinal=latitudinal
-            )
-    # check if the object is passing over the location and return
+        ))
+        body_lower_visibility = _calculate_path_visibility(
+                    location, object_lower_limit, radius, latitudinal=latitudinal
+                )
+        
+    # if the object is visible from the upper or lower limits, and it is nighttime
     if np.logical_and(np.logical_or(body_upper_visibility, body_lower_visibility), nighttime):
         return True
 

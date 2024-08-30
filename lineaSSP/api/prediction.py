@@ -1,9 +1,89 @@
 import requests
-from typing import Optional, List
 from .base import BaseAPI, BASE_URL
 from sora.prediction.occmap import plot_occ_map
+from .occviz import visibility_from_coeff
+from typing import List, Dict, Any, Optional
+import multiprocessing
+from functools import partial
+from tqdm import tqdm
 
-from typing import Optional, List, Dict, Any
+   
+class Prediction(BaseAPI):
+    """
+    Represents a prediction object that interacts with the prediction API.
+
+    Raises:
+        Exception: If no valid endpoint is found.
+    """
+
+    def __init__(self, base_url: str=BASE_URL, endpoint: str=""):
+        # Call the superclass's __init__ method with the appropriate base_url
+        super().__init__(base_url=base_url, endpoint=endpoint)
+        self.endpoint = self._detect_endpoint()
+
+    #TODO: Update this method when the api endpoint is fixed
+    def _detect_endpoint(self) -> str:
+        endpoints = {
+            "predictions": "/api/predictions",
+            "occultations": "/api/occultations",
+        }
+        for key, endpoint in endpoints.items():
+            url = f"{self.base_url}{endpoint}"
+            try:
+                response = requests.get(url)
+                if response.status_code in [200, 301, 302]:  # Include redirects
+                    return endpoint
+            except requests.RequestException as e:
+                continue
+        raise Exception("No valid endpoint found")
+
+
+    def _fetch_endpoint(self, endpoint: str, id: Optional[int]=None) -> str:
+        """
+        Fetches data from the specified endpoint.
+
+        Args:
+            endpoint (str): The endpoint to fetch data from.
+            id (Optional[int]): The ID of the data to fetch (default: None).
+
+        Returns:
+            str: The fetched data in JSON format if successful, otherwise a dictionary
+                 with an error message and the HTTP status code.
+
+        """
+        id_map = f"{id}/" if id is not None else ""
+        url = f"{self.base_url}{self.endpoint}/{id_map}{endpoint}/"
+        response = requests.get(url)
+
+        if response.status_code == 200:
+            return response.json()
+        else:
+            return {'error': 'An error occurred fetching the data', 'status_code': response.status_code}
+    
+    def asteroids_with_prediction(self) -> List[dict]:
+        """Fetches the asteroids with prediction from the endpoint.
+
+        Returns:
+            A list of dictionaries representing the asteroids with prediction.
+        """
+        return self._fetch_endpoint('asteroids_with_prediction')
+    
+    def dynamical_classes_with_prediction(self) -> List[dict]:
+        """Fetches the endpoint 'base_dynclass_with_prediction' and returns the result.
+
+        Returns:
+            A list of dictionaries representing the dynamical classes with prediction.
+        """
+        return self._fetch_endpoint('base_dynclass_with_prediction')
+    
+    def dynamical_subclasses_with_prediction(self) -> List[dict]:
+        """Fetches the endpoint 'dynclass_with_prediction' and returns the result.
+
+        Returns:
+            A list of dictionaries representing the dynamical subclasses with prediction.
+        """
+        return self._fetch_endpoint('dynclass_with_prediction')                            
+
 
 def generate_map(*args, 
                  data: Optional[List[Dict[str, Any]]] = None, 
@@ -123,7 +203,7 @@ def generate_map(*args,
 
             try:
                 plot_occ_map(
-                    name, radius, coord, time, ca, pa, vel, dist, mag=mag, longi=longi, error=error, lncolor=lncolor, ptcolor=ptcolor, ercolor=ercolor, outcolor=outcolor, **filtered_kwargs
+                    name, radius, coord, time, ca, pa, vel, dist, mag=mag, longi=longi, error=error if error > 0 else None, lncolor=lncolor, ptcolor=ptcolor, ercolor=ercolor, outcolor=outcolor, **filtered_kwargs
                 )
             except Exception as e:
                 print(f"Error while plotting map for {name}: {str(e)}")
@@ -138,80 +218,76 @@ def generate_map(*args,
 
 
 
-class Prediction(BaseAPI):
+def _visibility_check(item: Dict[str, Any], latitude: float, longitude: float, radius: float, n_elements: int) -> bool:
     """
-    Represents a prediction object that interacts with the prediction API.
+    Check visibility for a single item.
 
-    Raises:
-        Exception: If no valid endpoint is found.
+    Parameters
+    ----------
+    item : Dict[str, Any]
+        A dictionary containing event data with visibility coefficients.
+    latitude : float
+        Latitude of the location to check visibility from.
+    longitude : float
+        Longitude of the location to check visibility from.
+    radius : float
+        Radius around the location to check for visibility.
+    n_elements : int
+        Number of elements to use in the visibility calculation.
+
+    Returns
+    -------
+    bool
+        True if the event is visible, False otherwise.
     """
-
-    def __init__(self, base_url: str=BASE_URL, endpoint: str=""):
-        # Call the superclass's __init__ method with the appropriate base_url
-        super().__init__(base_url=base_url, endpoint=endpoint)
-        self.endpoint = self._detect_endpoint()
-
-    #TODO: Update this method when the api endpoint is fixed
-    def _detect_endpoint(self) -> str:
-        endpoints = {
-            "predictions": "/api/predictions",
-            "occultations": "/api/occultations",
-        }
-        for key, endpoint in endpoints.items():
-            url = f"{self.base_url}{endpoint}"
-            try:
-                response = requests.get(url)
-                if response.status_code in [200, 301, 302]:  # Include redirects
-                    return endpoint
-            except requests.RequestException as e:
-                continue
-        raise Exception("No valid endpoint found")
+    try:
+        return visibility_from_coeff(
+            latitude, longitude, radius, item['date_time'], item['occ_path_coeff'], n_elements=n_elements
+        )
+    except Exception as e:
+        # Log the error or handle it as needed
+        print(f"Error processing item: {item}, Error: {e}")
+        return False
 
 
-    def _fetch_endpoint(self, endpoint: str, id: Optional[int]=None) -> str:
-        """
-        Fetches data from the specified endpoint.
+def geofilter(data: List[Dict[str, Any]], latitude: float, longitude: float, radius: float, n_elements: Optional[int] = 1500, show_bar: Optional[bool] = True) -> List[Dict[str, Any]]:
+    """
+    Filter the data based on the visibility from a given geographic location using parallel processing.
 
-        Args:
-            endpoint (str): The endpoint to fetch data from.
-            id (Optional[int]): The ID of the data to fetch (default: None).
+    Parameters
+    ----------
+    data : List[Dict[str, Any]]
+        List of dictionaries containing event data with visibility coefficients.
+    latitude : float
+        Latitude of the location to check visibility from.
+    longitude : float
+        Longitude of the location to check visibility from.
+    radius : float
+        Radius around the location to check for visibility.
+    n_elements : int
+        Number of elements to use in the visibility calculation.
+    show_bar : Optional[bool], optional
+        Whether to use tqdm to display a progress bar, by default True.
 
-        Returns:
-            str: The fetched data in JSON format if successful, otherwise a dictionary
-                 with an error message and the HTTP status code.
+    Returns
+    -------
+    List[Dict[str, Any]]
+        Filtered list of dictionaries where the event is visible from the given location.
+    """
+    if isinstance(data, dict):
+        data = [data]
 
-        """
-        id_map = f"{id}/" if id is not None else ""
-        url = f"{self.base_url}{self.endpoint}/{id_map}{endpoint}/"
-        response = requests.get(url)
+    cpu_count = multiprocessing.cpu_count() - 1
 
-        if response.status_code == 200:
-            return response.json()
-        else:
-            return {'error': 'An error occurred fetching the data', 'status_code': response.status_code}
+    # Ensure that data passed to the pool is unique or correctly indexed
+    # unique_data = list({item['id']: item for item in data}.values())  # Assuming each item has a unique 'id' key
     
-    def asteroids_with_prediction(self) -> List[dict]:
-        """Fetches the asteroids with prediction from the endpoint.
+    with multiprocessing.Pool(cpu_count) as pool:
+        map_func = pool.imap if show_bar else pool.map
+        visibility_checks = list(map_func(
+            partial(_visibility_check, latitude=latitude, longitude=longitude, radius=radius, n_elements=n_elements),
+            tqdm(data, disable=not show_bar)
+        ))
 
-        Returns:
-            A list of dictionaries representing the asteroids with prediction.
-        """
-        return self._fetch_endpoint('asteroids_with_prediction')
-    
-    def dynamical_classes_with_prediction(self) -> List[dict]:
-        """Fetches the endpoint 'base_dynclass_with_prediction' and returns the result.
-
-        Returns:
-            A list of dictionaries representing the dynamical classes with prediction.
-        """
-        return self._fetch_endpoint('base_dynclass_with_prediction')
-    
-    def dynamical_subclasses_with_prediction(self) -> List[dict]:
-        """Fetches the endpoint 'dynclass_with_prediction' and returns the result.
-
-        Returns:
-            A list of dictionaries representing the dynamical subclasses with prediction.
-        """
-        return self._fetch_endpoint('dynclass_with_prediction')                            
-
-
+    # Filter the unique data based on visibility
+    return [item for item, visible in zip(data, visibility_checks) if visible]
