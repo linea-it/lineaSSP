@@ -149,15 +149,17 @@ class BaseAPI:
         
         limit = self.page_size if limit is None else limit
         params['pageSize'] = self.page_size
+        params['page'] = 1
 
         # parse ill formated values
         params = self._parse_values(params)
         
         fetch_results = self._fetch_data(params, id=id)
+        
         limit = fetch_results['count'] if limit == 'all' else limit # forçar pegar todos os resultados.
         # isto é calculado para criar o iterador tqdm. usar while 'next' is not None tornaria a barra de progresso muito complicada
         n_pages = (limit // self.page_size) + 1 if (limit % self.page_size) > 0 else (limit // self.page_size)
-
+        
         output = fetch_results['results']
         if fetch_results['count'] == 0:
             return output
@@ -165,9 +167,9 @@ class BaseAPI:
         iterable = range(1, n_pages)
         if show_bar and n_pages > 1:
             iterable = tqdm(iterable, desc='Retrieving predictions', bar_format='{l_bar}{bar}|')
-
+        
         for i in iterable:
-            params['page'] = i
+            params['page'] = i + 1 
             fetch_results = self._fetch_data(params, id=id)
             if 'results' in fetch_results:
                 output += fetch_results['results']
