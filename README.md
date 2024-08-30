@@ -1,6 +1,6 @@
-# Linea Solar System Prediction (lineaSSP)
+# Linea Solar System Portal (lineaSSP)
 
-`lineaSSP` is a Python package designed to simplify interactions with the Solar System Prediction API. The package allows users to retrieve and analyze data related to asteroids, their predictions, occultation events, and more.
+`lineaSSP` is a Python package designed to simplify interactions with the Solar System Portal API. The package allows users to retrieve and analyze data related to asteroids, their predictions, occultation events, and more.
 
 ## Features
 
