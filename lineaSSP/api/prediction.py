@@ -116,13 +116,14 @@ def generate_map(*args,
             dist = value.get('delta', 0)
             mag = value.get('g_star', 0)
             longi = value.get('long', 0)
+            error = value.get('closest_approach_uncertainty', 0)*1000
             
             # Filter kwargs to include only allowed keys before calling plot_occ_map
             filtered_kwargs = {k: v for k, v in kwargs.items() if k in allowed_kwargs}
 
             try:
                 plot_occ_map(
-                    name, radius, coord, time, ca, pa, vel, dist, mag=mag, longi=longi, lncolor=lncolor, ptcolor=ptcolor, ercolor=ercolor, outcolor=outcolor, **filtered_kwargs
+                    name, radius, coord, time, ca, pa, vel, dist, mag=mag, longi=longi, error=error, lncolor=lncolor, ptcolor=ptcolor, ercolor=ercolor, outcolor=outcolor, **filtered_kwargs
                 )
             except Exception as e:
                 print(f"Error while plotting map for {name}: {str(e)}")
@@ -152,15 +153,6 @@ class Prediction(BaseAPI):
 
     #TODO: Update this method when the api endpoint is fixed
     def _detect_endpoint(self) -> str:
-        """
-        Detects the valid endpoint for the prediction API.
-
-        Returns:
-            str: The valid endpoint URL.
-
-        Raises:
-            Exception: If no valid endpoint is found.
-        """
         endpoints = {
             "predictions": "/api/predictions",
             "occultations": "/api/occultations",
@@ -169,11 +161,12 @@ class Prediction(BaseAPI):
             url = f"{self.base_url}{endpoint}"
             try:
                 response = requests.get(url)
-                if response.status_code == 200:
+                if response.status_code in [200, 301, 302]:  # Include redirects
                     return endpoint
-            except requests.RequestException:
+            except requests.RequestException as e:
                 continue
         raise Exception("No valid endpoint found")
+
 
     def _fetch_endpoint(self, endpoint: str, id: Optional[int]=None) -> str:
         """
