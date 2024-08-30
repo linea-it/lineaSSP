@@ -3,11 +3,9 @@ from tqdm import tqdm
 from typing import Union, Optional, List, Dict
 from collections import OrderedDict
 import re
-from datetime import datetime
-import json
 
 BASE_URL = 'https://solarsystem.linea.org.br'
-# BASE_URL = 'http://localhost'
+# BASE_URL = 'http://host.docker.internal'
 
 class BaseAPI:
     """
@@ -37,7 +35,12 @@ class BaseAPI:
 
     def _parse_values(self, params: dict) -> dict:
         if "name" in params.keys():
-            params["name"] = params["name"].strip().capitalize()
+            segments_in_name = params["name"].strip().split(' ')
+            if len(segments_in_name) == 1:
+                name = params["name"].strip().capitalize()
+            else:
+                name = " ".join([segment.upper() for segment in segments_in_name])
+            params["name"] = name
         
         if "principal_designation" in params.keys():
             params["principal_designation"] = params["principal_designation"].strip().upper()
@@ -143,7 +146,7 @@ class BaseAPI:
 
         """
         params = params if params is not None else {}
-
+        
         limit = self.page_size if limit is None else limit
         params['pageSize'] = self.page_size
 
@@ -168,7 +171,7 @@ class BaseAPI:
             fetch_results = self._fetch_data(params, id=id)
             if 'results' in fetch_results:
                 output += fetch_results['results']
-        
+
         #TODO: The api should return the correct key, update this when the api is fixed
         output = [self._replace_key(item, 'principal_designation', 'provisional_designation') for item in output[0:limit]]
         # output = self._drop_columns(output)
