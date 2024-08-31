@@ -14,7 +14,10 @@
 To install the `lineaSSP` package, use pip:
 
 ```bash
-pip install lineaSSP
+git clone https://github.com/linea-it/lineaSSP.git
+cd lineaSSP
+pip install .
+
 ```
 
 ## Usage
@@ -65,7 +68,9 @@ prediction_api = Prediction()
 
 # Fetch asteroids with predictions
 asteroids_with_predictions = prediction_api.asteroids_with_prediction()
-print(asteroids_with_predictions)
+
+# Print the asteroid list
+print(asteroids_with_predictions['results'])
 ```
 
 ### Fetching Occultation Predictions by Asteroid Name
@@ -74,6 +79,7 @@ To retrieve occultation predictions for a specific asteroid by its name:
 
 ```python
 from lineaSSP import Prediction
+import pandas as pd
 
 # Initialize the Prediction API
 prediction_api = Prediction()
@@ -82,7 +88,8 @@ prediction_api = Prediction()
 predictions = prediction_api.by_name('Chariklo', limit='all')
 
 # Print the predictions
-print(predictions)
+df = pd.DataFrame(predictions)
+df
 
 ```
 > **IMPORTANT - Queries are paginated by default**
@@ -95,13 +102,23 @@ print(predictions)
 Retrieve occultation events occurring within a specific date range:
 
 ```python
+from lineaSSP import Prediction
+import pandas as pd
+
+# Initialize the Prediction API
+prediction_api = Prediction()
 params = {
-    'date_time_after': '2024-01-01T00:00:00Z',
-    'date_time_before': '2024-12-31T23:59:59Z'
+    'date_time_after': '2024-06-28T00:00:00Z',
+    'date_time_before': '2024-06-29T23:59:59Z',
+    'magnitude_max': 12,
+    'nightside': True,
+    'local_solar_time_after': '21:00',
+    'local_solar_time_before': '03:00',
 }
 
-occultations = prediction_api.get_data(params=params)
-print(occultations)
+predictions = prediction_api.get_data(params=params)
+df = pd.DataFrame(predictions)
+df
 ```
 
 
@@ -116,7 +133,7 @@ Generate a map directly from the results of an occultation prediction query.
 This allows for easy visualization of where an occultation event will be observable:
 
 ```python
-from lineaSSP import generate_map
+from lineaSSP import generate_map, Prediction
 
 # Initialize the Prediction API
 prediction_api = Prediction()
@@ -124,9 +141,10 @@ prediction_api = Prediction()
 # Fetch occultations within a certain date range
 params = {
     'date_time_after': '2024-01-01T00:00:00Z',
-    'date_time_before': '2024-12-31T23:59:59Z'
+    'date_time_before': '2024-12-31T23:59:59Z',
+    'magnitude_max': 10,
 }
-occultations = prediction_api.get_data(params=params)
+occultations = prediction_api.get_data(params=params, limit=10)
 
 # Generate the map using the fetched data
 # the fucntion will iterate generation all maps in the list
@@ -139,7 +157,8 @@ You can use the genearte_map function as a wrapper of the original SORA function
 The `geofilter` method allows you to filter occultation predictions to see which ones are visible from a specific geographical location. This is particularly useful for planning observations:
 
 ```python
-from lineaSSP import geofilter, Predictions
+from lineaSSP import geofilter, Prediction
+import pandas as pd
 
 latitude = -23.55  # Latitude of the location (e.g., São Paulo, Brazil)
 longitude = -46.63  # Longitude of the location
@@ -156,9 +175,10 @@ params = {
 predictions = prediction_api.get_data(params=params)
 
 # Filter these occultations by geographical visibility
-filtered_predictions = prediction_api.geofilter(predictions, latitude=latitude, longitude=longitude, radius=radius)
+filtered_predictions = geofilter(predictions, latitude=latitude, longitude=longitude, radius=radius)
 
-print(filtered_predictions)
+df = pd.DataFrame(filtered_predictions)
+df
 ```
 
 
