@@ -29,6 +29,5 @@ setup(
     },
     test_suite="tests",
     python_requires=">=3.8",
-    packages=find_packages(where="src"),
-    package_dir={"": "src"},
+    packages=find_packages(),  # No need for `where` or `package_dir`
 )
