@@ -79,7 +79,7 @@ from lineaSSP import Prediction
 prediction_api = Prediction()
 
 # Fetch occultation predictions for a specific asteroid by its name
-predictions = prediction_api.by_name('Chariklo')
+predictions = prediction_api.by_name('Chariklo', limit='all')
 
 # Print the predictions
 print(predictions)
