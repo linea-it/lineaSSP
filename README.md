@@ -85,6 +85,10 @@ predictions = prediction_api.by_name('Chariklo')
 print(predictions)
 
 ```
+> **IMPORTANT - Queries are paginated by default**
+> 
+> Use the parameter `limit = 'all'` to retrive all predictions returned by the query. Due to pagination, the query is limited to 1000 entries by default.
+
 
 ### Fetching Occultations Predictions by Date Range
 
