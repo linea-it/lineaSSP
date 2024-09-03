@@ -1250,7 +1250,6 @@ def visibility_from_coeff(
             object_upper_limit[0][idx] += 360
 
         object_upper_limit = tuple(object_upper_limit)
-        
         body_upper_visibility = _calculate_path_visibility(
             location, object_upper_limit, radius, latitudinal=latitudinal
         )
@@ -1284,9 +1283,8 @@ def visibility_from_coeff(
             object_lower_limit[0] -= 360
             idx = np.where(object_lower_limit[0] < -180)
             object_lower_limit[0][idx] += 360
-
+    
         object_lower_limit = tuple(object_lower_limit)
-        
         body_lower_visibility = _calculate_path_visibility(
             location, object_lower_limit, radius, latitudinal=latitudinal
         )
@@ -1294,21 +1292,24 @@ def visibility_from_coeff(
             return True
 
     # check the vibility in between error or body size lines:
+    uplim = False
+    lowlim = False
     if( inputdict["body_upper_coeff_longitude"] 
         and inputdict["body_upper_coeff_latitude"]        
         and inputdict["body_lower_coeff_longitude"]
         and inputdict["body_lower_coeff_latitude"]
     ):
-
         lat_max = max(latitudes)
-        idx = np.argmin(abs(object_upper_limit[0] - longitude))
-        upper_lat = object_upper_limit[1][idx]
-        uplim = upper_lat > lat_max
+        if len(object_upper_limit[0]) > 0:
+            idx = np.argmin(abs(object_upper_limit[0] - longitude))
+            upper_lat = object_upper_limit[1][idx]
+            uplim = upper_lat > lat_max
 
         lat_min = min(latitudes)
-        idx = np.argmin(abs(object_lower_limit[0] - longitude))
-        lower_lat = object_lower_limit[1][idx]
-        lowlim = lower_lat < lat_min
+        if len(object_lower_limit[0]) > 0:
+            idx = np.argmin(abs(object_lower_limit[0] - longitude))
+            lower_lat = object_lower_limit[1][idx]
+            lowlim = lower_lat < lat_min
 
         if uplim and lowlim:
             return True
