@@ -14,9 +14,7 @@
 To install the `lineaSSP` package, use pip:
 
 ```bash
-git clone https://github.com/linea-it/lineaSSP.git
-cd lineaSSP
-pip install .
+pip install lineassp
 
 ```
 
