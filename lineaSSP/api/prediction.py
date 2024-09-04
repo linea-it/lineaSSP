@@ -1,6 +1,5 @@
 import requests
 from .base import BaseAPI, BASE_URL
-from sora.prediction.occmap import plot_occ_map
 from .occviz import visibility_from_coeff
 from typing import List, Dict, Any, Optional
 import multiprocessing
@@ -170,6 +169,8 @@ def generate_map(*args,
     - Ensure that the `kwargs` provided are in the list of allowed keyword arguments; 
       otherwise, they will be filtered out.
     """
+    from sora.prediction.occmap import plot_occ_map
+                    
     allowed_kwargs = [
         'alpha', 'arrow', 'atcolor', 'atm', 'centermap_delta', 'centermap_geo', 'centerproj',
         'chcolor', 'chord_delta', 'chord_geo', 'countries', 'cpoints', 'cscale', 'dpi', 'ercolor',
