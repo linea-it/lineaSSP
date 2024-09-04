@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setup(
     name="lineaSSP",
-    version="0.1.0",
+    version="0.1.1",
     description="A Python module to use or retrieve information from the LIneA Solar System Portal.",
     long_description=long_description,
     long_description_content_type="text/markdown",
