@@ -179,41 +179,95 @@ class BaseAPI:
         # output = self._drop_columns(output)
         return output
     
-    def by_provisional_designation(self, provisional_designation: str, limit: Optional[Union[int, str, None]]='all', show_bar: Optional[bool]=True) -> List[dict]:
+    def by_provisional_designation(self, provisional_designation: str, limit: Optional[Union[int, str, None]]='all', show_bar: Optional[bool]=True) -> Union[dict, List[dict]]:
         """Fetches the prediction by provisional designation.
 
         Args:
             provisional_designation (str): The provisional designation of the asteroid.
+            limit (Optional[Union[int, str, None]], optional): Limit for the results. Defaults to 'all'.
+            show_bar (Optional[bool], optional): Whether to show the progress bar. Defaults to True.
 
         Returns:
-            A list of dictionaries representing the prediction.
+            A dictionary if the result contains only one entry, or a list of dictionaries if more.
         """
+        # Type checking for provisional_designation
+        if not isinstance(provisional_designation, str):
+            raise TypeError(f"The provisional_designation must be a string, got {type(provisional_designation).__name__} instead.")
+        
         params = {'name': provisional_designation}
-        return self.get_data(params, limit=limit, show_bar=show_bar)
+        
+        # Fetch the data
+        result = self.get_data(params, limit=limit, show_bar=show_bar)
+
+        # If the result is a list with a length of 1, return the first element
+        if isinstance(result, list) and len(result) == 1:
+            return result[0]
+
+        # Otherwise, return the entire result (list of dictionaries)
+        return result
+
     
-    def by_name(self, name: str, limit: Optional[Union[int, str, None]]='all', show_bar: Optional[bool]=True) -> List[dict]:
+    def by_name(self, name: str, limit: Optional[Union[int, str, None]]='all', show_bar: Optional[bool]=True) -> Union[dict, List[dict]]:
         """Fetches the prediction by name.
 
         Args:
             name (str): The name of the asteroid.
+            limit (Optional[Union[int, str, None]], optional): Limit for the results. Defaults to 'all'.
+            show_bar (Optional[bool], optional): Whether to show the progress bar. Defaults to True.
+
+        Raises:
+            TypeError: If `name` is not a string.
 
         Returns:
-            A list of dictionaries representing the prediction.
+            A dictionary if the result contains only one entry, or a list of dictionaries if more.
         """
+        # Type checking for name
+        if not isinstance(name, str):
+            raise TypeError(f"The name must be a string, got {type(name).__name__} instead.")
+        
         params = {'name': name}
-        return self.get_data(params, limit=limit, show_bar=show_bar)
+        
+        # Fetch the data
+        result = self.get_data(params, limit=limit, show_bar=show_bar)
+
+        # If the result is a list with a length of 1, return the first element
+        if isinstance(result, list) and len(result) == 1:
+            return result[0]
+
+        # Otherwise, return the entire result (list of dictionaries)
+        return result
+
     
-    def by_number(self, number: int, limit: Optional[Union[int, str, None]]='all', show_bar: Optional[bool]=True) -> List[dict]:
+    def by_number(self, number: int, limit: Optional[Union[int, str, None]]='all', show_bar: Optional[bool]=True) -> Union[dict, List[dict]]:
         """Fetches the prediction by number.
 
         Args:
-            number (int): The number of the asteroid.
+            number (int or float): The number of the asteroid.
+            limit (Optional[Union[int, str, None]], optional): Limit for the results. Defaults to 'all'.
+            show_bar (Optional[bool], optional): Whether to show the progress bar. Defaults to True.
+
+        Raises:
+            TypeError: If `number` is not an int or float.
 
         Returns:
-            A list of dictionaries representing the prediction.
+            A dictionary if the result contains only one entry, or a list of dictionaries if more.
         """
+        # Check if number is an int or float
+        if not isinstance(number, (int, float)):
+            raise TypeError(f"The number must be an int or float, got {type(number).__name__} instead.")
+        
         params = {'number': number}
-        return self.get_data(params, limit=limit, show_bar=show_bar)
+        
+        # Fetch the data
+        result = self.get_data(params, limit=limit, show_bar=show_bar)
+
+        # If the result is a list with a length of 1, return the first element
+        if isinstance(result, list) and len(result) == 1:
+            return result[0]
+
+        # Otherwise, return the entire result (list of dictionaries)
+        return result
+
     
  
 class InvalidDatetimeFormat(Exception):

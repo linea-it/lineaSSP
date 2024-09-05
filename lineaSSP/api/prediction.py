@@ -188,7 +188,8 @@ def generate_map(*args,
         
         for value in data:
             name = value.get('name', '').replace(' ', '_')
-            radius = value.get('diameter', 0) / 2 if value.get('diameter') else 0
+            # radius = value.get('diameter', 0) / 2 if value.get('diameter') else 0
+            radius = (value.get('diameter') or 0) / 2
             coord = f"{value.get('ra_star_candidate', '')} {value.get('dec_star_candidate', '')}"
             time = value.get('date_time', '')
             ca = value.get('closest_approach', 0)
@@ -197,7 +198,7 @@ def generate_map(*args,
             dist = value.get('delta', 0)
             mag = value.get('g_star', 0)
             longi = value.get('long', 0)
-            error = value.get('closest_approach_uncertainty', 0)*1000
+            error = (value.get('closest_approach_uncertainty') or 0) * 1000
             
             # Filter kwargs to include only allowed keys before calling plot_occ_map
             filtered_kwargs = {k: v for k, v in kwargs.items() if k in allowed_kwargs}

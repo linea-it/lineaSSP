@@ -86,4 +86,4 @@ class Asteroid(BaseAPI):
         return Prediction().by_name(name, limit=limit, show_bar=show_bar)
 
     def get_predictions_by_number(self, number: int, limit: Optional[Union[int, str, None]]='all', show_bar: Optional[bool]=True) -> List[dict]:
-        return Prediction().by_number(number, limit=limit, show_bar=show_bar)    
+        return Prediction().by_number(number, limit=limit, show_bar=show_bar)
