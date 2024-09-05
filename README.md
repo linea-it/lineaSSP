@@ -182,45 +182,37 @@ df
 
 ## API Query Parameters
 
-The `lineaSSP` package allows querying the API with various parameters to retrieve specific data when passing the `params` dictionary. Below is a detailed table of all the parameters that can be used with the `Prediction` and `Asteroid` classes.
-
-### Asteroid Query Parameters
-
-| Parameter              | Description                                                       | Type    |
-|------------------------|-------------------------------------------------------------------|---------|
-| `base_dynclass`        | Object's base dynamical classification (e.g., KBO, Centaur)       | String  |
-| `dynclass`             | Object's dynamical subclass (e.g., Resonant, Inner)               | String  |
-| `name`                 | Object name (official or provisional designation)                 | String  |
-| `number`               | Object number (not all objects have numbers assigned)             | Integer |
-| `provisional_designation`| Provisional
+The `lineaSSP` package allows querying the API with various parameters to retrieve specific data when passing the `params` dictionary. Below is a detailed table of all the parameters that can be used with the `Prediction` class.
 
 
 ### Occultation Query Parameters
 
-| Parameter              | Description                                                       | Type    |
-|------------------------|-------------------------------------------------------------------|---------|
-| `date_time_after`      | Fetch occultations occurring after this date                      | String  |
-| `date_time_before`     | Fetch occultations occurring before this date                     | String  |
-| `diameter_max`         | Maximum diameter (km)                                             | Double  |
-| `diameter_min`         | Minimum diameter (km)                                             | Double  |
-| `base_dynclass`        | Object's base dynamical classification  (Skybot)                  | String  |
-| `dynclass`             | Object's dynamical subclass (Skybot)                              | String  |
-| `event_duration_max`   | Maximum event duration (seconds)                                  | Double  |
-| `event_duration_min`   | Minimum event duration (seconds)                                  | Double  |
-| `jobid`                | Job ID of the occultation event                                   | Integer |
-| `latitude`             | Latitude for geographical filtering                               | Double  |
-| `local_solar_time_after`| Local Solar Time After                                           | String  |
-| `local_solar_time_before`| Local Solar Time Before                                         | String  |
-| `location_radius`      | Radius around the location to check for visibility                | Double  |
-| `longitude`            | Longitude for geographical filtering                              | Double  |
-| `magnitude_drop_max`   | Maximum expected star's magnitude drop                            | Double  |
-| `magnitude_drop_min`   | Minimum expected star's magnitude drop                            | Double  |
-| `magnitude_max`        | Maximum magnitude (Gaia G magnitude)                              | Double  |
-| `magnitude_min`        | Minimum magnitude (Gaia G magnitude)                              | Double  |
-| `nightside`            | Filter for occultations on the nightside                          | Boolean |
-| `name`                 | Object name (multiple values may be separated by commas)          | Array of Strings |
-| `number`               | Object number (multiple values may be separated by commas)        | Array of Strings |
-| `provisional_designation`| Provisional designation assigned by the International Astronomical Union (IAU) | String  |
+| Parameter                      | Description                                                       | Type    |
+|---------------------------------|-------------------------------------------------------------------|---------|
+| `date_time_after`               | Fetch occultations occurring after this date                      | String  |
+| `date_time_before`              | Fetch occultations occurring before this date                     | String  |
+| `diameter_max`                  | Maximum diameter (km)                                             | Double  |
+| `diameter_min`                  | Minimum diameter (km)                                             | Double  |
+| `base_dynclass`                 | Object's base dynamical classification  (Skybot)                  | String  |
+| `dynclass`                      | Object's dynamical subclass (Skybot)                              | String  |
+| `event_duration_max`            | Maximum event duration (seconds)                                  | Double  |
+| `event_duration_min`            | Minimum event duration (seconds)                                  | Double  |
+| `jobid`                         | Job ID of the occultation event                                   | Integer |
+| `latitude`                      | Latitude for geographical filtering                               | Double  |
+| `local_solar_time_after`        | Local Solar Time After                                            | String  |
+| `local_solar_time_before`       | Local Solar Time Before                                           | String  |
+| `location_radius`               | Radius around the location to check for visibility                | Double  |
+| `longitude`                     | Longitude for geographical filtering                              | Double  |
+| `magnitude_drop_max`            | Maximum expected star's magnitude drop                            | Double  |
+| `magnitude_drop_min`            | Minimum expected star's magnitude drop                            | Double  |
+| `magnitude_max`                 | Maximum magnitude (Gaia G magnitude)                              | Double  |
+| `magnitude_min`                 | Minimum magnitude (Gaia G magnitude)                              | Double  |
+| `nightside`                     | Filter for occultations on the nightside                          | Boolean |
+| `name`                          | Object name (multiple values may be separated by commas)          | String  |
+| `number`                        | Object number (multiple values may be separated by commas)        | Integer |
+| `closest_approach_uncertainty_km_max` | Closest approach uncertainty in geocentric distance (max, km) | Double  |
+| `closest_approach_uncertainty_km_min` | Closest approach uncertainty in geocentric distance (min, km) | Double  |
+| `hash_id`                       | Hash ID                                                          | String  |
 
 
 
