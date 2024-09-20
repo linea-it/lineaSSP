@@ -1,4 +1,15 @@
+# ⚠️ SERVERS UNDER MAINTENANCE ⚠️
+
+We apologize for the inconvenience, but between **September 16 and 20, 2024**, we are performing maintenance in our data center. During this period, all of our services and platforms will be inaccessible. Thank you for your understanding. Please feel free to contact us.
+
+— **LIneA IT Team**
+
+---
+
+
 # Linea Solar System Portal (lineaSSP)
+
+https://solarsystem.linea.org.br
 
 `lineaSSP` is a Python package designed to simplify interactions with the Solar System Portal API. The package allows users to retrieve and analyze data related to asteroids, their predictions, occultation events, and more.
 
