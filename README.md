@@ -1,12 +1,3 @@
-# ⚠️ SERVERS UNDER MAINTENANCE ⚠️
-
-We apologize for the inconvenience, but between **September 16 and 20, 2024**, we are performing maintenance in our data center. During this period, all of our services and platforms will be inaccessible. Thank you for your understanding. Please feel free to contact us.
-
-— **LIneA IT Team**
-
----
-
-
 # Linea Solar System Portal (lineaSSP)
 
 https://solarsystem.linea.org.br
