@@ -1,3 +1,37 @@
+# SERVICE IN MAINTENANCE
+
+## Dear Users,
+
+We would like to inform you that **a full scheduled downtime** of our services will take place from **April 7 to April 17, 2025**, to carry out a series of maintenance and infrastructure expansion activities.
+
+During this period, this application will be **unavailable**.
+
+Thank you for your patience!
+
+Please feel free to contact us.
+
+**— LIneA IT Team**
+
+---
+
+# SERVIÇO EM MANUTENÇÃO
+
+## Prezados Usuários,
+
+Informamos que entre os dias **07 e 17 de abril de 2025** será realizada **uma parada programada completa** nos nossos serviços para a execução de uma série de atividades de manutenção e expansão da infraestrutura.
+
+Durante esse período, esta aplicação ficará **indisponível**.
+
+Agradecemos sua paciência!
+
+Sinta-se livre para nos contatar.
+
+**— Equipe de TI do LIneA**
+
+---
+---
+---
+
 # Linea Solar System Portal (lineaSSP)
 
 https://solarsystem.linea.org.br
